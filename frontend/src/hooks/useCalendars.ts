@@ -24,8 +24,9 @@ export function useUpdateCalendar() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: CalendarUpdate }) =>
       calendarsApi.updateCalendar(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendars'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['calendars'] });
+      await queryClient.refetchQueries({ queryKey: ['events'] });
     },
   });
 }

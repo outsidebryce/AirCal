@@ -1,33 +1,35 @@
 .calendar-view {
   height: 100%;
   padding: 1rem;
-  background: white;
+  background: var(--color-bg-secondary);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--color-shadow);
+  transition: background-color 0.2s ease;
 }
 
 /* FullCalendar custom styles */
 .fc {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: inherit;
 }
 
 .fc .fc-toolbar-title {
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .fc .fc-button {
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   font-weight: 500;
   padding: 0.5rem 1rem;
   transition: all 0.15s ease;
 }
 
 .fc .fc-button:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-text-muted);
 }
 
 .fc .fc-button:focus {
@@ -37,23 +39,24 @@
 
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
 .fc .fc-daygrid-day-number,
 .fc .fc-col-header-cell-cushion {
-  color: #374151;
+  color: var(--color-text-secondary);
   text-decoration: none;
 }
 
-.fc .fc-daygrid-day.fc-day-today {
-  background-color: #eff6ff;
+.fc .fc-daygrid-day.fc-day-today,
+.fc .fc-timegrid-col.fc-day-today {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  background-color: #3b82f6;
+  background-color: var(--color-accent);
   color: white;
   border-radius: 50%;
   width: 28px;
@@ -73,7 +76,26 @@
 
 .fc .fc-event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+/* Month view: text-only for timed (dot) events only */
+.fc-dayGridMonth-view .fc-daygrid-dot-event {
+  background: transparent !important;
+  border: none !important;
+  color: var(--color-text-secondary);
+  box-shadow: none;
+}
+
+.fc-dayGridMonth-view .fc-daygrid-dot-event:hover {
+  background: var(--color-bg-hover) !important;
+  transform: none;
+  box-shadow: none;
+}
+
+.fc-dayGridMonth-view .fc-daygrid-dot-event .fc-event-title {
+  color: var(--color-text-secondary);
+  font-weight: 400;
 }
 
 .fc .fc-timegrid-slot {
@@ -82,7 +104,7 @@
 
 .fc .fc-timegrid-slot-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .fc .fc-highlight {
@@ -90,6 +112,29 @@
 }
 
 .fc .fc-daygrid-more-link {
-  color: #3b82f6;
+  color: var(--color-accent);
   font-weight: 500;
+}
+
+/* Dark mode specific overrides for FullCalendar */
+[data-theme='dark'] .fc-theme-standard td,
+[data-theme='dark'] .fc-theme-standard th,
+[data-theme='dark'] .fc-theme-standard .fc-scrollgrid {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .fc .fc-daygrid-day-frame {
+  background-color: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .fc-timegrid-slot {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .fc .fc-event,
+[data-theme='dark'] .fc .fc-timegrid-event,
+[data-theme='dark'] .fc .fc-timegrid-event .fc-event-main {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }

@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,6 +8,7 @@ import type { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/c
 import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import { useEvents, useUpdateEvent } from '../../hooks/useEvents';
 import { useCalendars } from '../../hooks/useCalendars';
+import { getContrastTextColor } from '../../utils/color';
 import type { ExpandedEvent } from '../../types/event';
 import type { Calendar } from '../../types/calendar';
 import './CalendarView.css';
@@ -19,12 +20,69 @@ interface CalendarViewProps {
 
 export function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) {
   const calendarRef = useRef<FullCalendar>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [dateRange, setDateRange] = useState(() => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     return { start, end };
   });
+
+  // Update calendar size when container resizes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      calendarRef.current?.getApi().updateSize();
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+
+      const api = calendarRef.current?.getApi();
+      if (!api) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'm':
+          api.changeView('dayGridMonth');
+          break;
+        case 'w':
+          api.changeView('timeGridWeek');
+          break;
+        case 'd':
+          api.changeView('timeGridDay');
+          break;
+        case 't':
+          api.today();
+          // Scroll to current time in week/day views
+          const viewType = api.view.type;
+          if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            api.scrollToTime(`${hours}:${minutes}:00`);
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const { data: calendars = [] } = useCalendars();
   const visibleCalendarIds = calendars
@@ -42,14 +100,16 @@ export function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) 
   // Convert events to FullCalendar format
   const calendarEvents = events.map((event: ExpandedEvent) => {
     const calendar = calendars.find((c: Calendar) => c.id === event.calendar_id);
+    const bgColor = calendar?.color || '#3788d8';
     return {
       id: `${event.uid}-${event.start}`,
       title: event.summary,
       start: event.start,
       end: event.end,
       allDay: event.all_day,
-      backgroundColor: calendar?.color || '#3788d8',
-      borderColor: calendar?.color || '#3788d8',
+      backgroundColor: bgColor,
+      borderColor: bgColor,
+      textColor: getContrastTextColor(bgColor),
       extendedProps: {
         ...event,
       },
@@ -106,7 +166,7 @@ export function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) 
   }, []);
 
   return (
-    <div className="calendar-view">
+    <div className="calendar-view" ref={containerRef}>
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin]}
@@ -122,6 +182,7 @@ export function CalendarView({ onEventClick, onDateSelect }: CalendarViewProps) 
         selectMirror={true}
         dayMaxEvents={true}
         weekends={true}
+        fixedWeekCount={false}
         select={handleDateSelect}
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}

@@ -1,23 +1,23 @@
 .connect-form {
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .connect-form h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .connect-form .help-text {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin: 0 0 1rem 0;
 }
 
 .connect-form .help-text a {
-  color: #3b82f6;
+  color: var(--color-accent);
   text-decoration: none;
 }
 
@@ -26,7 +26,7 @@
 }
 
 .connect-form.loading {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
 }
 
@@ -41,14 +41,14 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #9ca3af;
+  background-color: var(--color-text-muted);
 }
 
 .status-dot.connected {
@@ -68,27 +68,30 @@
   display: block;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin-bottom: 0.25rem;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.5rem 0.625rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.875rem;
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.2s;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .error {
   display: block;
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }
@@ -96,11 +99,16 @@
 .error-message {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
-  color: #dc2626;
+  color: var(--color-danger);
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   font-size: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+[data-theme='dark'] .error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .btn {
@@ -119,34 +127,34 @@
 }
 
 .btn-primary {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--color-accent-hover);
 }
 
 .btn-secondary {
-  background-color: white;
-  border-color: #d1d5db;
-  color: #374151;
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #f9fafb;
+  background-color: var(--color-bg-hover);
 }
 
 .btn-danger {
-  background-color: white;
-  border-color: #d1d5db;
-  color: #dc2626;
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-border);
+  color: var(--color-danger);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #fef2f2;
-  border-color: #fecaca;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-danger);
 }
 
 .full-width {

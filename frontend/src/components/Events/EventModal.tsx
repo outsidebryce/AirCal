@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,6 +40,42 @@ function formatDateLocal(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+function getFormValues(
+  event: ExpandedEvent | null | undefined,
+  defaultStart: Date | undefined,
+  defaultEnd: Date | undefined,
+  defaultAllDay: boolean,
+  defaultCalendarId: string
+): EventFormData {
+  const allDay = event?.all_day || defaultAllDay;
+  return {
+    summary: event?.summary || '',
+    description: event?.description || '',
+    location: event?.location || '',
+    calendar_id: event?.calendar_id || defaultCalendarId,
+    start: event
+      ? allDay
+        ? formatDateLocal(new Date(event.start))
+        : formatDateTimeLocal(new Date(event.start))
+      : defaultStart
+        ? defaultAllDay
+          ? formatDateLocal(defaultStart)
+          : formatDateTimeLocal(defaultStart)
+        : formatDateTimeLocal(new Date()),
+    end: event
+      ? allDay
+        ? formatDateLocal(new Date(event.end))
+        : formatDateTimeLocal(new Date(event.end))
+      : defaultEnd
+        ? defaultAllDay
+          ? formatDateLocal(defaultEnd)
+          : formatDateTimeLocal(defaultEnd)
+        : formatDateTimeLocal(new Date(Date.now() + 3600000)),
+    all_day: allDay,
+    rrule: event?.rrule || '',
+  };
+}
+
 export function EventModal({
   isOpen,
   onClose,
@@ -53,41 +90,25 @@ export function EventModal({
   const deleteEvent = useDeleteEvent();
 
   const isEditing = !!event;
+  const defaultCalendarId = calendars[0]?.id || '';
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: {
-      summary: event?.summary || '',
-      description: event?.description || '',
-      location: event?.location || '',
-      calendar_id: event?.calendar_id || calendars[0]?.id || '',
-      start: event
-        ? event.all_day
-          ? formatDateLocal(new Date(event.start))
-          : formatDateTimeLocal(new Date(event.start))
-        : defaultStart
-          ? defaultAllDay
-            ? formatDateLocal(defaultStart)
-            : formatDateTimeLocal(defaultStart)
-          : formatDateTimeLocal(new Date()),
-      end: event
-        ? event.all_day
-          ? formatDateLocal(new Date(event.end))
-          : formatDateTimeLocal(new Date(event.end))
-        : defaultEnd
-          ? defaultAllDay
-            ? formatDateLocal(defaultEnd)
-            : formatDateTimeLocal(defaultEnd)
-          : formatDateTimeLocal(new Date(Date.now() + 3600000)),
-      all_day: event?.all_day || defaultAllDay,
-      rrule: event?.rrule || '',
-    },
+    defaultValues: getFormValues(event, defaultStart, defaultEnd, defaultAllDay, defaultCalendarId),
   });
+
+  // Reset form when event or defaults change
+  useEffect(() => {
+    if (isOpen) {
+      reset(getFormValues(event, defaultStart, defaultEnd, defaultAllDay, defaultCalendarId));
+    }
+  }, [isOpen, event, defaultStart, defaultEnd, defaultAllDay, defaultCalendarId, reset]);
 
   const allDay = watch('all_day');
 
@@ -144,11 +165,8 @@ export function EventModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className={`event-pane ${isOpen ? 'open' : ''}`}>
         <div className="modal-header">
           <h2>{isEditing ? 'Edit Event' : 'New Event'}</h2>
           <button className="close-button" onClick={onClose}>
@@ -267,7 +285,6 @@ export function EventModal({
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 }

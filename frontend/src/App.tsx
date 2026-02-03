@@ -4,6 +4,7 @@ import { CalendarView } from './components/Calendar';
 import { EventModal } from './components/Events';
 import { CalendarList } from './components/Sidebar';
 import { ConnectForm } from './components/Auth';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import type { ExpandedEvent } from './types/event';
 import logo from './assets/air-intent-logo.png.png';
 import './App.css';
@@ -17,10 +18,23 @@ const queryClient = new QueryClient({
   },
 });
 
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      className="theme-toggle"
+      onClick={toggleTheme}
+      title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+    >
+      {theme === 'light' ? '🌙' : '☀️'}
+    </button>
+  );
+}
+
 function AppContent() {
   const [selectedEvent, setSelectedEvent] = useState<ExpandedEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [defaultEventTimes, setDefaultEventTimes] = useState<{
     start: Date;
     end: Date;
@@ -59,6 +73,7 @@ function AppContent() {
           </div>
         )}
         <div className="sidebar-footer">
+          <ThemeToggle />
           <button
             className="sidebar-toggle"
             onClick={() => setSidebarVisible(!sidebarVisible)}
@@ -91,7 +106,9 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

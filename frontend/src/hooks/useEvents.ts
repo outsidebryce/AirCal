@@ -23,8 +23,8 @@ export function useCreateEvent() {
 
   return useMutation({
     mutationFn: (data: EventCreate) => eventsApi.createEvent(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['events'] });
     },
   });
 }
@@ -44,8 +44,8 @@ export function useUpdateEvent() {
       data: EventUpdate;
       updateMode?: UpdateMode;
     }) => eventsApi.updateEvent(uid, calendarId, data, updateMode),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['events'] });
     },
   });
 }
@@ -65,8 +65,8 @@ export function useDeleteEvent() {
       deleteMode?: DeleteMode;
       occurrenceDate?: Date;
     }) => eventsApi.deleteEvent(uid, calendarId, deleteMode, occurrenceDate),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['events'] });
     },
   });
 }
