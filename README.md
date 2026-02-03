@@ -1,159 +1,175 @@
 # AirCal
 
-A self-hosted calendar application with Fastmail CalDAV integration. View and manage your calendars with a clean, modern interface featuring multiple views including calendar, timeline, map, and analytics dashboard.
+> Your calendar is a map, not a list.
+
+Open-source calendar with spatial timeline. See where your time went, not just what you scheduled.
 
 ![Dashboard](docs/screenshot-dashboard.png)
 
-## Features
+## Why AirCal?
 
-### Core Calendar
-- **Fastmail CalDAV Sync** - Connect to your Fastmail account and sync all your calendars
-- **Multiple Views** - Month, week, and day views powered by FullCalendar
-- **Multiple Calendars** - View and toggle visibility of multiple calendars
-- **Recurring Events** - Full support for recurring events with RRULE expansion
-- **Event Management** - Create, edit, and delete events with two-way sync
-- **Local Caching** - SQLite database for fast offline access
-- **Dark Mode** - Toggle between light and dark themes
+Traditional calendars show **what** you scheduled. AirCal shows **where** you lived.
 
-### Dashboard & Analytics
-- **Event Statistics** - View event counts, time spent, and patterns
-- **Time Utilization** - See how much of your time is scheduled vs available
-- **Events by Day/Hour** - Visualize when you're busiest
-- **Top Meeting Types** - Track your most frequent activities
-- **Event Covers** - Auto-generated cover images based on event keywords and emojis
+**For Digital Nomads**
+See exactly where you were productive vs burned out across 30 cities
 
-### Availability Scheduler
-- **Visual Availability Selection** - Paint your available time slots directly on the calendar
-- **Smart Detection** - Automatically identifies free time around existing events
-- **Cal.com Integration** - Create booking links for others to schedule with you
-- **Custom Durations** - Set meeting lengths and buffer times
+**For Remote Workers**
+Understand which locations optimize your work/life balance
 
-![Availability Scheduler](docs/screenshot-availability.png)
+**For Privacy-Conscious Users**
+Self-host everything: calendar, sync, analytics. Zero cloud dependency.
+
+**For Quantified Self**
+Spatial memory > chronological lists. See patterns in WHERE you spend time.
+
+## Screenshots
 
 ### Timeline View
-- **Location-Based Navigation** - Browse events grouped by location
-- **Location Inheritance** - Events inherit location from previous days until a new location appears
-- **Dynamic Cover Images** - Beautiful backgrounds based on most-attended events
-- **Hover Preview** - Hover over events to preview their cover image
-- **Time Aggregation** - See total time spent at each location
-
 ![Timeline View](docs/screenshot-timeline.png)
+*Browse events by location. Events inherit location until a new one appears—see your life as location spans, not scattered appointments.*
 
 ### Map View
-- **Geographic Visualization** - See all your events on an interactive map
-- **Location Clustering** - Events grouped by location with aggregate statistics
-- **Rich Popups** - Cover images, time totals, and activity breakdowns per location
-- **Date Range Filtering** - Filter by day, month, or year
-
 ![Map View](docs/screenshot-map.png)
+*Geographic visualization of all events. Click locations for aggregated statistics and time breakdowns.*
 
-### Settings & Configuration
-- **CalDAV Connection** - Easy setup with Fastmail and other CalDAV providers
-- **Calendar Management** - Toggle visibility and customize colors
-- **Integration Settings** - Configure AI and Cal.com API keys
+### Availability Scheduler
+![Availability Scheduler](docs/screenshot-availability.png)
+*Paint available time slots directly on the calendar. Generate booking links via Cal.com integration.*
 
+### Settings
 ![Settings](docs/screenshot-settings.png)
+*Connect CalDAV providers, manage calendars, configure integrations.*
 
-## Tech Stack
+## Features
 
-**Frontend:**
-- React + TypeScript
-- Vite
-- FullCalendar
-- TanStack Query
-- Leaflet (maps)
-- React Hook Form + Zod
+### Timeline View
+The killer feature. Browse your calendar organized by location, not just time.
 
-**Backend:**
-- Python + FastAPI
-- CalDAV library for Fastmail integration
-- SQLite with SQLAlchemy
-- iCalendar parsing with recurring-ical-events
+- **Location Spans** - Events inherit location from previous days until a new location appears
+- **Dynamic Covers** - Background images based on event keywords and emojis
+- **Time Aggregation** - See total hours spent at each location
+- **Hover Preview** - Preview event covers on hover
 
-## Getting Started
+### Map View
+See your events on an interactive map.
+
+- **Geographic Clustering** - Events grouped by location with counts
+- **Rich Popups** - Cover images, time totals, activity breakdowns per location
+- **Date Filtering** - Filter by day, month, or year
+- **Location Inheritance** - Same smart location logic as Timeline
+
+### Availability Scheduler
+Share your availability with a single link.
+
+- **Visual Selection** - Paint available slots directly on the calendar
+- **Cal.com Integration** - Create booking types with custom durations
+- **Buffer Time** - Set padding between meetings
+- **Smart Detection** - Automatically identifies free time around existing events
+
+### Analytics Dashboard
+Understand your time patterns.
+
+- **Time Utilization** - Scheduled vs available time
+- **Events by Day/Hour** - See when you're busiest
+- **Top Activities** - Track your most frequent event types
+- **Calendar Breakdown** - Time distribution across calendars
+
+### Core Calendar
+Everything you expect from a modern calendar.
+
+- **CalDAV Sync** - Fastmail, iCloud, Google (via CalDAV)
+- **Multiple Views** - Month, week, day powered by FullCalendar
+- **Multiple Calendars** - Toggle visibility, customize colors
+- **Recurring Events** - Full RRULE support with expansion
+- **Two-Way Sync** - Create, edit, delete with sync back to server
+- **Offline Ready** - SQLite caching for fast local access
+- **Dark Mode** - System-aware theme switching
+
+## Comparison
+
+| Feature | Google Cal | Calendly | Motion | AirCal |
+|---------|-----------|----------|--------|--------|
+| Timeline view | ❌ | ❌ | ❌ | ✅ |
+| Location-based patterns | ❌ | ❌ | ❌ | ✅ |
+| Self-hosted | ❌ | ❌ | ❌ | ✅ |
+| Booking links | ❌ | ✅ | ✅ | ✅ |
+| Open source | ❌ | ❌ | ❌ | ✅ |
+| CalDAV support | ❌ | ❌ | ❌ | ✅ |
+
+## Quick Start
 
 ### Prerequisites
 
 - Python 3.12+
 - Node.js 20+
-- A Fastmail account with an app-specific password
+- A CalDAV account (Fastmail, iCloud, etc.)
 
-### Backend Setup
+### Backend
 
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the server
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`.
+API available at `http://localhost:8000`
 
-### Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Run the dev server
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+App available at `http://localhost:5173`
 
-### Connecting to Fastmail
+### Connect CalDAV
 
-1. Go to [Fastmail Settings > Privacy & Security > App Passwords](https://www.fastmail.com/settings/security/devicekeys)
-2. Create a new app password for "AirCal"
-3. In the AirCal app, enter your Fastmail email and the app password
-4. Click Connect - your calendars will sync automatically
+1. **Fastmail**: Go to Settings → Privacy & Security → [App Passwords](https://www.fastmail.com/settings/security/devicekeys)
+2. Create an app password for "AirCal"
+3. In Settings, enter your email and app password
+4. Click Connect—calendars sync automatically
 
 ## Configuration
 
-### Backend Environment Variables
-
-Create a `.env` file in the `backend` directory:
+### Backend (.env)
 
 ```env
 DEBUG=true
 CORS_ORIGINS=["http://localhost:5173","http://127.0.0.1:5173"]
 ```
 
-### Frontend Environment Variables
-
-Create a `.env` file in the `frontend` directory:
+### Frontend (.env)
 
 ```env
 VITE_API_URL=http://localhost:8000
 ```
 
-## API Endpoints
+## Tech Stack
+
+**Frontend**: React, TypeScript, Vite, FullCalendar, TanStack Query, Leaflet
+
+**Backend**: Python, FastAPI, SQLAlchemy, SQLite, caldav, icalendar
+
+## API Reference
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/connect` | Connect to Fastmail |
-| GET | `/api/auth/status` | Check connection status |
-| POST | `/api/auth/disconnect` | Disconnect from Fastmail |
-| GET | `/api/calendars` | List all calendars |
-| PUT | `/api/calendars/{id}` | Update calendar settings |
-| GET | `/api/events` | Get events in date range |
-| POST | `/api/events` | Create new event |
+| POST | `/api/auth/connect` | Connect CalDAV |
+| GET | `/api/auth/status` | Connection status |
+| POST | `/api/auth/disconnect` | Disconnect |
+| GET | `/api/calendars` | List calendars |
+| PUT | `/api/calendars/{id}` | Update calendar |
+| GET | `/api/events` | Get events (date range) |
+| POST | `/api/events` | Create event |
 | PUT | `/api/events/{uid}` | Update event |
 | DELETE | `/api/events/{uid}` | Delete event |
-| POST | `/api/sync` | Force sync with Fastmail |
+| POST | `/api/sync` | Force sync |
 | GET | `/api/booking-types` | List booking types |
 | POST | `/api/booking-types` | Create booking type |
-| PUT | `/api/booking-types/{id}` | Update booking type |
-| DELETE | `/api/booking-types/{id}` | Delete booking type |
 
 ## Project Structure
 
@@ -164,29 +180,47 @@ aircal/
 │   │   ├── api/           # FastAPI routes
 │   │   ├── models/        # SQLAlchemy models
 │   │   ├── schemas/       # Pydantic schemas
-│   │   └── services/      # Business logic
+│   │   └── services/      # CalDAV, iCalendar, sync
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── api/           # API client
 │   │   ├── components/
-│   │   │   ├── Booking/   # Booking type management
-│   │   │   ├── Calendar/  # Calendar views
-│   │   │   ├── Dashboard/ # Analytics dashboard
-│   │   │   ├── Events/    # Event modal
-│   │   │   ├── Map/       # Map view
-│   │   │   ├── Onboarding/# Welcome wizard
-│   │   │   ├── Settings/  # Settings modal
-│   │   │   ├── Sidebar/   # Calendar list
-│   │   │   └── Timeline/  # Timeline view
-│   │   ├── contexts/      # React contexts (theme, calendar mode)
+│   │   │   ├── Calendar/  # FullCalendar views
+│   │   │   ├── Timeline/  # Location-based timeline
+│   │   │   ├── Map/       # Leaflet map view
+│   │   │   ├── Dashboard/ # Analytics
+│   │   │   ├── Booking/   # Availability scheduler
+│   │   │   └── Settings/  # Configuration modal
 │   │   ├── hooks/         # React Query hooks
-│   │   ├── types/         # TypeScript types
-│   │   └── utils/         # Utilities (event covers, location spans)
+│   │   ├── utils/         # Location spans, covers
+│   │   └── contexts/      # Theme, calendar mode
 │   └── package.json
 └── docs/                  # Screenshots
 ```
 
+## Roadmap
+
+- [ ] AI-powered timeline analysis
+- [ ] Mobile apps (iOS/Android)
+- [ ] Multi-location pattern comparison
+- [ ] Google Calendar OAuth
+- [ ] Export/import formats
+- [ ] Predictive scheduling suggestions
+
+## Contributing
+
+Contributions welcome! Please open an issue first to discuss changes.
+
+## Community
+
+⭐ **Star this repo** to follow development
+🐛 **[Report issues](https://github.com/outsidebryce/AirCal/issues)** on GitHub
+💬 **Discussions** welcome for roadmap input
+
 ## License
 
-MIT
+[AGPL-3.0](LICENSE) - Free to use, modify, and distribute. Derivatives must remain open source.
+
+---
+
+Built by [@outsidebryce](https://github.com/outsidebryce)
