@@ -2,7 +2,7 @@
 
 A self-hosted calendar application with Fastmail CalDAV integration. View and manage your calendars with a clean, modern interface featuring multiple views including calendar, timeline, map, and analytics dashboard.
 
-![Month View](docs/screenshot-month.png)
+![Dashboard](docs/screenshot-dashboard.png)
 
 ## Features
 
@@ -17,33 +17,42 @@ A self-hosted calendar application with Fastmail CalDAV integration. View and ma
 
 ### Dashboard & Analytics
 - **Event Statistics** - View event counts, time spent, and patterns
+- **Time Utilization** - See how much of your time is scheduled vs available
+- **Events by Day/Hour** - Visualize when you're busiest
+- **Top Meeting Types** - Track your most frequent activities
 - **Event Covers** - Auto-generated cover images based on event keywords and emojis
-- **Visual Analytics** - See how you spend your time across calendars
+
+### Availability Scheduler
+- **Visual Availability Selection** - Paint your available time slots directly on the calendar
+- **Smart Detection** - Automatically identifies free time around existing events
+- **Cal.com Integration** - Create booking links for others to schedule with you
+- **Custom Durations** - Set meeting lengths and buffer times
+
+![Availability Scheduler](docs/screenshot-availability.png)
 
 ### Timeline View
 - **Location-Based Navigation** - Browse events grouped by location
 - **Location Inheritance** - Events inherit location from previous days until a new location appears
-- **Dynamic Cover Images** - Background changes based on most-attended events
+- **Dynamic Cover Images** - Beautiful backgrounds based on most-attended events
 - **Hover Preview** - Hover over events to preview their cover image
 - **Time Aggregation** - See total time spent at each location
 
+![Timeline View](docs/screenshot-timeline.png)
+
 ### Map View
 - **Geographic Visualization** - See all your events on an interactive map
-- **Location Clustering** - Events grouped by location with counts
+- **Location Clustering** - Events grouped by location with aggregate statistics
+- **Rich Popups** - Cover images, time totals, and activity breakdowns per location
 - **Date Range Filtering** - Filter by day, month, or year
 
-### Booking Links
-- **Availability Management** - Set your available times for meetings
-- **Booking Types** - Create different meeting types with custom durations
-- **Shareable Links** - Generate booking links for others to schedule with you
+![Map View](docs/screenshot-map.png)
 
-## Screenshots
+### Settings & Configuration
+- **CalDAV Connection** - Easy setup with Fastmail and other CalDAV providers
+- **Calendar Management** - Toggle visibility and customize colors
+- **Integration Settings** - Configure AI and Cal.com API keys
 
-### Week View
-![Week View](docs/screenshot-week.png)
-
-### Day View
-![Day View](docs/screenshot-day.png)
+![Settings](docs/screenshot-settings.png)
 
 ## Tech Stack
 
@@ -52,6 +61,7 @@ A self-hosted calendar application with Fastmail CalDAV integration. View and ma
 - Vite
 - FullCalendar
 - TanStack Query
+- Leaflet (maps)
 - React Hook Form + Zod
 
 **Backend:**
@@ -165,6 +175,8 @@ aircal/
 │   │   │   ├── Dashboard/ # Analytics dashboard
 │   │   │   ├── Events/    # Event modal
 │   │   │   ├── Map/       # Map view
+│   │   │   ├── Onboarding/# Welcome wizard
+│   │   │   ├── Settings/  # Settings modal
 │   │   │   ├── Sidebar/   # Calendar list
 │   │   │   └── Timeline/  # Timeline view
 │   │   ├── contexts/      # React contexts (theme, calendar mode)

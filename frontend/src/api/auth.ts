@@ -26,3 +26,14 @@ export async function syncAll(): Promise<SyncResponse> {
   const response = await api.post<SyncResponse>('/sync');
   return response.data;
 }
+
+export interface SyncStatusResponse {
+  last_sync: string | null;
+  sync_in_progress: boolean;
+  sync_interval_minutes?: number;
+}
+
+export async function getSyncStatus(): Promise<SyncStatusResponse> {
+  const response = await api.get<SyncStatusResponse>('/sync/status');
+  return response.data;
+}

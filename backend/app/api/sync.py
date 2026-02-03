@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
+import logging
 
 from app.schemas.calendar import SyncResponse
 from app.models.database import get_db
@@ -9,33 +10,29 @@ from app.models.calendar import Calendar
 from app.models.event import Event
 from app.services.caldav_service import get_caldav_service
 from app.services.icalendar_service import parse_icalendar
+from app.services.sync_scheduler import get_sync_status as get_scheduler_status
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
-@router.post("", response_model=SyncResponse)
-async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
+async def do_sync(db: AsyncSession) -> SyncResponse:
     """
-    Synchronize all calendars with Fastmail.
-    Fetches latest events and updates local cache.
+    Core sync logic - can be called from API or background scheduler.
+    Returns SyncResponse with results.
+    Raises ValueError if not connected or no calendars.
     """
     service = get_caldav_service()
 
     if not service:
-        raise HTTPException(
-            status_code=400,
-            detail="Not connected to Fastmail. Please connect first.",
-        )
+        raise ValueError("Not connected to Fastmail")
 
     # Get all calendars from database
     result = await db.execute(select(Calendar))
     calendars = result.scalars().all()
 
     if not calendars:
-        raise HTTPException(
-            status_code=400,
-            detail="No calendars found. Please connect to Fastmail first.",
-        )
+        raise ValueError("No calendars found")
 
     calendars_synced = 0
     events_updated = 0
@@ -77,21 +74,41 @@ async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
                     existing = event_result.scalar_one_or_none()
 
                     if existing:
-                        # Update existing event
-                        existing.summary = parsed.get("summary", "")
-                        existing.description = parsed.get("description")
-                        existing.location = parsed.get("location")
-                        existing.start_dt = parsed.get("start_dt")
-                        existing.end_dt = parsed.get("end_dt")
-                        existing.all_day = parsed.get("all_day", False)
-                        existing.rrule = parsed.get("rrule")
-                        existing.exdate = parsed.get("exdate")
-                        existing.recurrence_id = parsed.get("recurrence_id")
-                        existing.icalendar_data = ical_data
-                        existing.etag = getattr(dav_event, "etag", None)
-                        existing.href = str(dav_event.url) if dav_event.url else None
-                        existing.last_modified = parsed.get("last_modified")
-                        existing.sync_status = "synced"
+                        # Check if there are pending local changes
+                        if existing.sync_status in ("pending_update", "pending_create"):
+                            logger.info(
+                                f"Skipping server update for event {uid} - has pending local changes "
+                                f"(sync_status={existing.sync_status})"
+                            )
+                            # Try to push local changes to server
+                            if existing.sync_status == "pending_update" and existing.href:
+                                try:
+                                    success = await service.async_update_event(
+                                        dav_calendar, existing.href, existing.icalendar_data
+                                    )
+                                    if success:
+                                        existing.sync_status = "synced"
+                                        logger.info(f"Successfully pushed pending changes for event {uid}")
+                                    else:
+                                        logger.warning(f"Failed to push pending changes for event {uid}")
+                                except Exception as e:
+                                    logger.warning(f"Error pushing pending changes for event {uid}: {e}")
+                        else:
+                            # Update existing event from server
+                            existing.summary = parsed.get("summary", "")
+                            existing.description = parsed.get("description")
+                            existing.location = parsed.get("location")
+                            existing.start_dt = parsed.get("start_dt")
+                            existing.end_dt = parsed.get("end_dt")
+                            existing.all_day = parsed.get("all_day", False)
+                            existing.rrule = parsed.get("rrule")
+                            existing.exdate = parsed.get("exdate")
+                            existing.recurrence_id = parsed.get("recurrence_id")
+                            existing.icalendar_data = ical_data
+                            existing.etag = getattr(dav_event, "etag", None)
+                            existing.href = str(dav_event.url) if dav_event.url else None
+                            existing.last_modified = parsed.get("last_modified")
+                            existing.sync_status = "synced"
                     else:
                         # Create new event
                         new_event = Event(
@@ -119,7 +136,7 @@ async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
                     events_updated += 1
 
                 except Exception as e:
-                    print(f"Error processing event: {e}")
+                    logger.warning(f"Error processing event: {e}")
                     continue
 
             # Delete local events that no longer exist on server
@@ -137,7 +154,7 @@ async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
             calendars_synced += 1
 
         except Exception as e:
-            print(f"Error syncing calendar {calendar.id}: {e}")
+            logger.warning(f"Error syncing calendar {calendar.id}: {e}")
             continue
 
     await db.commit()
@@ -150,15 +167,19 @@ async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
     )
 
 
-@router.get("/status")
-async def get_sync_status(db: AsyncSession = Depends(get_db)):
-    """Get the status of the last sync."""
-    result = await db.execute(
-        select(Calendar).order_by(Calendar.last_synced.desc()).limit(1)
-    )
-    calendar = result.scalar_one_or_none()
+@router.post("", response_model=SyncResponse)
+async def sync_all_calendars(db: AsyncSession = Depends(get_db)):
+    """
+    Synchronize all calendars with Fastmail.
+    Fetches latest events and updates local cache.
+    """
+    try:
+        return await do_sync(db)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return {
-        "last_sync": calendar.last_synced if calendar else None,
-        "sync_in_progress": False,
-    }
+
+@router.get("/status")
+async def get_sync_status():
+    """Get the status of the last sync."""
+    return get_scheduler_status()

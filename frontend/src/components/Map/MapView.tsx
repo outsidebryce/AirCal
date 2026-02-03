@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useEvents } from '../../hooks/useEvents';
 import { useCalendars } from '../../hooks/useCalendars';
+import { fetchEventCover } from '../../utils/eventCovers';
+import { computeLocationSpans, formatDuration } from '../../utils/locationSpans';
 import type { ExpandedEvent } from '../../types/event';
 import type { Calendar } from '../../types/calendar';
 import 'leaflet/dist/leaflet.css';
@@ -21,6 +23,42 @@ interface GeocodedLocation {
   lat: number;
   lng: number;
   events: ExpandedEvent[];
+}
+
+interface EventAggregate {
+  summary: string;
+  totalMinutes: number;
+  count: number;
+  calendarId: string;
+}
+
+function aggregateEvents(events: ExpandedEvent[]): EventAggregate[] {
+  const aggregates = new Map<string, EventAggregate>();
+
+  for (const event of events) {
+    const key = event.summary.toLowerCase().trim();
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.max(0, durationMs / 60000);
+
+    if (aggregates.has(key)) {
+      const agg = aggregates.get(key)!;
+      agg.totalMinutes += durationMinutes;
+      agg.count += 1;
+    } else {
+      aggregates.set(key, {
+        summary: event.summary,
+        totalMinutes: durationMinutes,
+        count: 1,
+        calendarId: event.calendar_id,
+      });
+    }
+  }
+
+  // Sort by total time descending
+  return Array.from(aggregates.values())
+    .sort((a, b) => b.totalMinutes - a.totalMinutes);
 }
 
 // Cache for geocoded locations - persisted to localStorage
@@ -116,6 +154,7 @@ export function MapView() {
   const [totalLocations, setTotalLocations] = useState(0);
   const [rangeType, setRangeType] = useState<DateRangeType>('month');
   const [baseDate, setBaseDate] = useState(() => new Date());
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({});
   const lastLocationsKey = useRef<string | null>(null);
 
   // Calculate date range based on type and base date
@@ -215,18 +254,20 @@ export function MapView() {
     visibleCalendarIds.length > 0 ? visibleCalendarIds : undefined
   );
 
-  // Create stable key from location data
+  // Use location spans to group events (events inherit location from previous events)
   const locationGroups = useMemo(() => {
     const groups: Record<string, ExpandedEvent[]> = {};
-    events.forEach((event: ExpandedEvent) => {
-      if (event.location && event.location.trim() !== '') {
-        const loc = event.location.trim();
-        if (!groups[loc]) {
-          groups[loc] = [];
-        }
-        groups[loc].push(event);
+    const spans = computeLocationSpans(events);
+
+    // Group all events from all spans by their governing location
+    for (const span of spans) {
+      const loc = span.location;
+      if (!groups[loc]) {
+        groups[loc] = [];
       }
-    });
+      groups[loc].push(...span.events);
+    }
+
     return groups;
   }, [events]);
 
@@ -317,9 +358,44 @@ export function MapView() {
     };
   }, [locationsKey, locationGroups]);
 
+  // Fetch cover images for each location
+  useEffect(() => {
+    const fetchCovers = async () => {
+      const newCoverUrls: Record<string, string> = {};
+
+      for (const loc of geocodedLocations) {
+        // Get the most attended event for cover
+        const aggregates = aggregateEvents(loc.events);
+        if (aggregates.length > 0) {
+          const topEvent = loc.events.find(
+            e => e.summary.toLowerCase().trim() === aggregates[0].summary.toLowerCase().trim()
+          );
+          if (topEvent) {
+            const url = await fetchEventCover(topEvent.summary, topEvent.description, loc.location);
+            if (url) {
+              newCoverUrls[loc.location] = url;
+            }
+          }
+        }
+      }
+
+      setCoverUrls(newCoverUrls);
+    };
+
+    if (geocodedLocations.length > 0) {
+      fetchCovers();
+    }
+  }, [geocodedLocations]);
+
   // Get calendar color for an event
   const getEventColor = (event: ExpandedEvent): string => {
     const calendar = calendars.find((c: Calendar) => c.id === event.calendar_id);
+    return calendar?.color || '#3788d8';
+  };
+
+  // Get calendar color by ID
+  const getCalendarColor = (calendarId: string): string => {
+    const calendar = calendars.find((c: Calendar) => c.id === calendarId);
     return calendar?.color || '#3788d8';
   };
 
@@ -411,36 +487,80 @@ export function MapView() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitBounds locations={geocodedLocations} />
-        {geocodedLocations.map((loc) => (
-          <Marker
-            key={loc.location}
-            position={[loc.lat, loc.lng]}
-            icon={createMarkerIcon(getEventColor(loc.events[0]))}
-          >
-            <Popup>
-              <div className="map-popup">
-                <h4>{loc.location}</h4>
-                <ul>
-                  {loc.events.slice(0, 5).map((event) => (
-                    <li key={`${event.uid}-${event.start}`}>
-                      <span
-                        className="event-dot"
-                        style={{ backgroundColor: getEventColor(event) }}
-                      ></span>
-                      <span className="event-title">{event.summary}</span>
-                      <span className="event-date">
-                        {new Date(event.start).toLocaleDateString()}
-                      </span>
-                    </li>
-                  ))}
-                  {loc.events.length > 5 && (
-                    <li className="more">+{loc.events.length - 5} more events</li>
+        {geocodedLocations.map((loc) => {
+          const aggregates = aggregateEvents(loc.events);
+          const maxMinutes = aggregates.length > 0 ? aggregates[0].totalMinutes : 1;
+          const totalMinutes = loc.events.reduce((sum, e) => {
+            const start = new Date(e.start);
+            const end = new Date(e.end);
+            return sum + Math.max(0, (end.getTime() - start.getTime()) / 60000);
+          }, 0);
+
+          return (
+            <Marker
+              key={loc.location}
+              position={[loc.lat, loc.lng]}
+              icon={createMarkerIcon(getEventColor(loc.events[0]))}
+            >
+              <Popup>
+                <div className="map-popup">
+                  {coverUrls[loc.location] && (
+                    <div
+                      className="popup-cover"
+                      style={{ backgroundImage: `url(${coverUrls[loc.location]})` }}
+                    >
+                      <div className="popup-cover-overlay">
+                        <h4>{loc.location}</h4>
+                      </div>
+                    </div>
                   )}
-                </ul>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+                  {!coverUrls[loc.location] && <h4 className="popup-title">{loc.location}</h4>}
+
+                  <div className="popup-stats">
+                    <div className="popup-stat">
+                      <span className="stat-value">{formatDuration(totalMinutes)}</span>
+                      <span className="stat-label">Total</span>
+                    </div>
+                    <div className="popup-stat">
+                      <span className="stat-value">{loc.events.length}</span>
+                      <span className="stat-label">Events</span>
+                    </div>
+                  </div>
+
+                  <div className="popup-aggregates">
+                    {aggregates.slice(0, 5).map((agg, idx) => {
+                      const percentage = (agg.totalMinutes / maxMinutes) * 100;
+                      return (
+                        <div key={`${agg.summary}-${idx}`} className="aggregate-item">
+                          <div className="aggregate-header">
+                            <span
+                              className="aggregate-dot"
+                              style={{ backgroundColor: getCalendarColor(agg.calendarId) }}
+                            />
+                            <span className="aggregate-label">{agg.summary}</span>
+                            <span className="aggregate-value">{formatDuration(agg.totalMinutes)}</span>
+                          </div>
+                          <div className="aggregate-bar">
+                            <div
+                              className="aggregate-fill"
+                              style={{
+                                width: `${percentage}%`,
+                                backgroundColor: getCalendarColor(agg.calendarId),
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {aggregates.length > 5 && (
+                      <div className="popup-more">+{aggregates.length - 5} more activities</div>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
       <div className="map-stats">
         {geocodedLocations.length} location{geocodedLocations.length !== 1 ? 's' : ''}

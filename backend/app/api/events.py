@@ -4,6 +4,9 @@ from sqlalchemy import select, and_, or_
 from datetime import datetime, timedelta
 from typing import Optional
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.schemas.event import (
     EventCreate,
@@ -195,6 +198,8 @@ async def update_event(
     - SINGLE: Create an exception for this instance only
     - THIS_AND_FUTURE: Split the series at this point
     """
+    logger.info(f"Updating event {event_uid} with data: {update}")
+
     result = await db.execute(
         select(Event).where(
             and_(Event.uid == event_uid, Event.calendar_id == calendar_id)
@@ -205,8 +210,11 @@ async def update_event(
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    logger.info(f"Found event: {event.summary}, href={event.href}, current start={event.start_dt}, end={event.end_dt}")
+
     # Update iCalendar data
     new_ical = update_icalendar(event.icalendar_data, update)
+    logger.debug(f"Updated iCalendar data: {new_ical[:500]}...")
 
     # Update local fields
     if update.summary is not None:
@@ -216,8 +224,10 @@ async def update_event(
     if update.location is not None:
         event.location = update.location
     if update.start is not None:
+        logger.info(f"Updating start from {event.start_dt} to {update.start}")
         event.start_dt = update.start
     if update.end is not None:
+        logger.info(f"Updating end from {event.end_dt} to {update.end}")
         event.end_dt = update.end
     if update.all_day is not None:
         event.all_day = update.all_day
@@ -232,6 +242,8 @@ async def update_event(
 
     # Try to update on CalDAV server
     service = get_caldav_service()
+    logger.info(f"CalDAV service available: {service is not None}, event.href: {event.href}")
+
     if service and event.href:
         result_cal = await db.execute(
             select(Calendar).where(Calendar.id == calendar_id)
@@ -239,16 +251,29 @@ async def update_event(
         calendar = result_cal.scalar_one_or_none()
 
         if calendar:
+            logger.info(f"Calendar found: {calendar.name}, caldav_url: {calendar.caldav_url}")
             dav_calendar = service.get_calendar_by_url(calendar.caldav_url)
             if dav_calendar:
+                logger.info(f"DAV calendar obtained, attempting update...")
                 success = await service.async_update_event(
                     dav_calendar, event.href, new_ical
                 )
+                logger.info(f"CalDAV update result: {success}")
                 if success:
                     event.sync_status = "synced"
+            else:
+                logger.warning(f"Could not get DAV calendar for URL: {calendar.caldav_url}")
+        else:
+            logger.warning(f"Calendar not found for id: {calendar_id}")
+    else:
+        if not service:
+            logger.warning("CalDAV service not available - event will be updated locally only")
+        if not event.href:
+            logger.warning(f"Event has no href - cannot update on CalDAV server")
 
     await db.commit()
     await db.refresh(event)
+    logger.info(f"Event updated successfully. Final start={event.start_dt}, end={event.end_dt}, sync_status={event.sync_status}")
 
     return EventResponse(
         uid=event.uid,

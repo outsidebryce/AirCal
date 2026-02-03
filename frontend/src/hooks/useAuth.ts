@@ -31,6 +31,7 @@ export function useDisconnect() {
       queryClient.invalidateQueries({ queryKey: ['auth'] });
       queryClient.invalidateQueries({ queryKey: ['calendars'] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['sync'] });
     },
   });
 }
@@ -43,6 +44,16 @@ export function useSync() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['calendars'] });
+      queryClient.invalidateQueries({ queryKey: ['sync', 'status'] });
     },
+  });
+}
+
+export function useSyncStatus() {
+  return useQuery({
+    queryKey: ['sync', 'status'],
+    queryFn: authApi.getSyncStatus,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every minute to show updated sync status
   });
 }

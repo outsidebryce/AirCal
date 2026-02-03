@@ -2,9 +2,12 @@ from icalendar import Calendar as ICalendar, Event as IEvent, vDatetime, vRecur
 from datetime import datetime, date
 from typing import Optional
 import uuid
+import logging
 from zoneinfo import ZoneInfo
 
 from app.schemas.event import EventCreate, EventUpdate
+
+logger = logging.getLogger(__name__)
 
 
 def parse_icalendar(ical_data: str) -> dict:
@@ -121,10 +124,15 @@ def update_icalendar(
     update: EventUpdate,
 ) -> str:
     """Update existing iCalendar data with new values."""
+    logger.info(f"Updating iCalendar with: start={update.start}, end={update.end}, all_day={update.all_day}")
     cal = ICalendar.from_ical(existing_ical)
 
     for component in cal.walk():
         if component.name == "VEVENT":
+            old_dtstart = component.get("dtstart")
+            old_dtend = component.get("dtend")
+            logger.info(f"Original DTSTART: {old_dtstart.dt if old_dtstart else 'None'}, DTEND: {old_dtend.dt if old_dtend else 'None'}")
+
             if update.summary is not None:
                 component["summary"] = update.summary
             if update.description is not None:
@@ -141,15 +149,21 @@ def update_icalendar(
             if update.start is not None:
                 del component["dtstart"]
                 if update.all_day:
-                    component.add("dtstart", update.start.date())
+                    new_start = update.start.date()
+                    logger.info(f"Setting all-day DTSTART to date: {new_start}")
+                    component.add("dtstart", new_start)
                 else:
+                    logger.info(f"Setting timed DTSTART to datetime: {update.start}")
                     component.add("dtstart", update.start)
 
             if update.end is not None:
                 del component["dtend"]
                 if update.all_day:
-                    component.add("dtend", update.end.date())
+                    new_end = update.end.date()
+                    logger.info(f"Setting all-day DTEND to date: {new_end}")
+                    component.add("dtend", new_end)
                 else:
+                    logger.info(f"Setting timed DTEND to datetime: {update.end}")
                     component.add("dtend", update.end)
 
             if update.rrule is not None:
@@ -158,16 +172,26 @@ def update_icalendar(
                 if update.rrule:
                     component.add("rrule", vRecur.from_ical(update.rrule))
 
-            # Update modification timestamp and sequence
+            # Update modification timestamp, dtstamp, and sequence
+            now = datetime.utcnow()
+
             if "last-modified" in component:
                 del component["last-modified"]
-            component.add("last-modified", datetime.utcnow())
+            component.add("last-modified", now)
+
+            # Also update DTSTAMP - some servers require this
+            if "dtstamp" in component:
+                del component["dtstamp"]
+            component.add("dtstamp", now)
 
             sequence = int(component.get("sequence", 0))
             if "sequence" in component:
                 del component["sequence"]
             component.add("sequence", sequence + 1)
+            logger.info(f"Updated sequence to: {sequence + 1}, last-modified and dtstamp to: {now}")
 
             break
 
-    return cal.to_ical().decode()
+    result = cal.to_ical().decode()
+    logger.debug(f"Updated iCalendar data: {result[:300]}...")
+    return result

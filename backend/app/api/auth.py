@@ -15,6 +15,11 @@ from app.services.caldav_service import (
     get_caldav_service,
     set_caldav_service,
 )
+from app.services.credential_service import (
+    save_credentials,
+    clear_credentials,
+)
+from app.services.sync_scheduler import start_sync_scheduler, stop_sync_scheduler
 from app.models.database import get_db
 from app.models.calendar import Calendar
 
@@ -54,6 +59,9 @@ async def connect_to_fastmail(
     # Store service globally
     set_caldav_service(service)
 
+    # Save credentials for persistent authentication
+    await save_credentials(db, request.username, request.app_password)
+
     # Save calendars to database
     for dav_cal in dav_calendars:
         # Generate a unique ID from the URL
@@ -82,6 +90,9 @@ async def connect_to_fastmail(
 
     await db.commit()
 
+    # Start background sync scheduler
+    await start_sync_scheduler()
+
     return ConnectResponse(
         success=True,
         message=f"Connected to Fastmail. Found {len(dav_calendars)} calendar(s).",
@@ -104,9 +115,18 @@ async def get_auth_status():
 
 
 @router.post("/disconnect", response_model=DisconnectResponse)
-async def disconnect_from_fastmail():
+async def disconnect_from_fastmail(
+    db: AsyncSession = Depends(get_db),
+):
     """Disconnect from Fastmail (clear credentials)."""
+    # Stop the sync scheduler
+    await stop_sync_scheduler()
+
+    # Clear the CalDAV service
     set_caldav_service(None)
+
+    # Clear stored credentials
+    await clear_credentials(db)
 
     return DisconnectResponse(
         success=True,

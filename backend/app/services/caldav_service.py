@@ -95,12 +95,26 @@ class CalDAVService:
     def update_event(self, calendar: DAVCalendar, href: str, ical_data: str) -> bool:
         """Update an existing event."""
         try:
+            logger.info(f"Fetching event by href: {href}")
             event = calendar.event_by_url(href)
+            logger.info(f"Event fetched successfully. URL: {event.url}")
+            logger.info(f"Setting new ical data ({len(ical_data)} bytes)")
+            logger.debug(f"iCal data preview: {ical_data[:500]}...")
+
+            # Set new data and save
             event.data = ical_data
+            logger.info("Saving event to CalDAV server...")
             event.save()
+            logger.info("Event saved successfully to CalDAV server")
             return True
+        except caldav.error.NotFoundError as e:
+            logger.error(f"Event not found at {href}: {e}")
+            return False
+        except caldav.error.AuthorizationError as e:
+            logger.error(f"Authorization error updating event at {href}: {e}")
+            return False
         except Exception as e:
-            logger.error(f"Error updating event: {e}")
+            logger.error(f"Error updating event at {href}: {e}", exc_info=True)
             return False
 
     def delete_event(self, calendar: DAVCalendar, href: str) -> bool:

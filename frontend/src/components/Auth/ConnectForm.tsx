@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useConnect, useAuthStatus, useDisconnect, useSync } from '../../hooks/useAuth';
+import { useConnect, useAuthStatus, useDisconnect, useSync, useSyncStatus } from '../../hooks/useAuth';
 import './ConnectForm.css';
 
 const connectSchema = z.object({
@@ -12,8 +12,27 @@ const connectSchema = z.object({
 
 type ConnectFormData = z.infer<typeof connectSchema>;
 
+function formatLastSync(isoString: string | null): string {
+  if (!isoString) return 'Never';
+  const date = new Date(isoString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins === 1) return '1 minute ago';
+  if (diffMins < 60) return `${diffMins} minutes ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours === 1) return '1 hour ago';
+  if (diffHours < 24) return `${diffHours} hours ago`;
+
+  return date.toLocaleDateString();
+}
+
 export function ConnectForm() {
   const { data: authStatus, isLoading: statusLoading } = useAuthStatus();
+  const { data: syncStatus } = useSyncStatus();
   const connect = useConnect();
   const disconnect = useDisconnect();
   const sync = useSync();
@@ -68,13 +87,20 @@ export function ConnectForm() {
           <span className="status-dot connected" />
           <span>Connected as {authStatus.username}</span>
         </div>
+        <div className="sync-info">
+          <span className="sync-label">Last sync:</span>
+          <span className="sync-time">{formatLastSync(syncStatus?.last_sync ?? null)}</span>
+          {syncStatus?.sync_interval_minutes && (
+            <span className="sync-auto">Auto-sync every {syncStatus.sync_interval_minutes}m</span>
+          )}
+        </div>
         <div className="actions">
           <button
             className="btn btn-secondary"
             onClick={handleSync}
             disabled={sync.isPending}
           >
-            {sync.isPending ? 'Syncing...' : 'Sync'}
+            {sync.isPending ? 'Syncing...' : 'Sync Now'}
           </button>
           <button
             className="btn btn-danger"
