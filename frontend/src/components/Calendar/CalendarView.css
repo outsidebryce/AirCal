@@ -44,6 +44,62 @@
   color: white;
 }
 
+/* Mode toggle buttons - styled as a toggle group */
+.fc .fc-eventsMode-button,
+.fc .fc-availabilityMode-button {
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+}
+
+.fc .fc-eventsMode-button {
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+}
+
+.fc .fc-availabilityMode-button {
+  border-radius: 0 6px 6px 0;
+}
+
+/* Active mode button */
+.calendar-view:not(.availability-mode) .fc .fc-eventsMode-button {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.calendar-view.availability-mode .fc .fc-availabilityMode-button {
+  background-color: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+/* Cancel button */
+.fc .fc-cancelAvailability-button {
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.fc .fc-cancelAvailability-button:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+/* Save Availability button */
+.fc .fc-saveAvailability-button {
+  background-color: #22c55e !important;
+  border-color: #22c55e !important;
+  color: white !important;
+}
+
+.fc .fc-saveAvailability-button:hover {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
 .fc .fc-daygrid-day-number,
 .fc .fc-col-header-cell-cushion {
   color: var(--color-text-secondary);
@@ -111,6 +167,11 @@
   background-color: rgba(59, 130, 246, 0.1);
 }
 
+/* Availability mode highlight */
+.calendar-view.availability-mode .fc .fc-highlight {
+  background-color: rgba(34, 197, 94, 0.2);
+}
+
 .fc .fc-daygrid-more-link {
   color: var(--color-accent);
   font-weight: 500;
@@ -137,4 +198,52 @@
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Make existing events semi-transparent in availability mode */
+.fc .fc-event.availability-mode-event {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Availability blocks - pending (being drawn) */
+.fc .fc-event.availability-block.pending {
+  border: 2px dashed #22c55e !important;
+  background: rgba(34, 197, 94, 0.3) !important;
+  cursor: pointer;
+}
+
+.fc .fc-event.availability-block.pending:hover {
+  background: rgba(34, 197, 94, 0.4) !important;
+}
+
+/* Availability blocks - saved */
+.fc .fc-event.availability-block.saved {
+  border: 1px solid #22c55e !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  cursor: default;
+}
+
+.fc .fc-event.availability-block .fc-event-title,
+.fc .fc-event.availability-block .fc-event-main {
+  color: #166534 !important;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .fc .fc-event.availability-block .fc-event-title,
+[data-theme='dark'] .fc .fc-event.availability-block .fc-event-main {
+  color: #86efac !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .fc .fc-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
 }

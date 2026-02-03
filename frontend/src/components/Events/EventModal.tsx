@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '../../hooks/useEvents';
 import { useCalendars } from '../../hooks/useCalendars';
+import { fetchEventCover } from '../../utils/eventCovers';
 import type { ExpandedEvent } from '../../types/event';
 import type { Calendar } from '../../types/calendar';
 import './EventModal.css';
@@ -92,6 +93,23 @@ export function EventModal({
   const isEditing = !!event;
   const defaultCalendarId = calendars[0]?.id || '';
 
+  // Event cover image state
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [coverLoaded, setCoverLoaded] = useState(false);
+
+  // Fetch cover image when event changes
+  useEffect(() => {
+    if (event?.summary) {
+      setCoverLoaded(false);
+      fetchEventCover(event.summary, event.description, event.location).then(url => {
+        setCoverUrl(url);
+      });
+    } else {
+      setCoverUrl(null);
+      setCoverLoaded(false);
+    }
+  }, [event?.summary, event?.description, event?.location]);
+
   const {
     register,
     handleSubmit,
@@ -167,6 +185,19 @@ export function EventModal({
 
   return (
     <div className={`event-pane ${isOpen ? 'open' : ''}`}>
+        {/* Event Cover Image */}
+        {coverUrl && isEditing && (
+          <div className="event-cover-wrapper">
+            <img
+              src={coverUrl}
+              alt=""
+              className={`event-cover-image ${coverLoaded ? 'loaded' : ''}`}
+              onLoad={() => setCoverLoaded(true)}
+            />
+            {!coverLoaded && <div className="event-cover-placeholder" />}
+          </div>
+        )}
+
         <div className="modal-header">
           <h2>{isEditing ? 'Edit Event' : 'New Event'}</h2>
           <button className="close-button" onClick={onClose}>

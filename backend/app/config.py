@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     DEFAULT_SYNC_INTERVAL_MINUTES: int = 15
     DEFAULT_EVENT_DURATION_MINUTES: int = 60
 
+    # Cal.com integration
+    CALCOM_API_KEY: str | None = None
+    CALCOM_API_URL: str = "https://api.cal.com/v1"
+    CALCOM_WEBHOOK_SECRET: str | None = None
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
