@@ -1,4 +1,4 @@
-# AirCal
+# Atlas
 
 > Your calendar is a map, not a list.
 
@@ -6,9 +6,9 @@ Open-source calendar with spatial timeline. See where your time went, not just w
 
 ![Dashboard](docs/screenshot-dashboard.png)
 
-## Why AirCal?
+## Why Atlas?
 
-Traditional calendars show **what** you scheduled. AirCal shows **where** you lived.
+Traditional calendars show **what** you scheduled. Atlas shows **where** you lived.
 
 **For Digital Nomads**
 See exactly where you were productive vs burned out across 30 cities
@@ -87,7 +87,7 @@ Everything you expect from a modern calendar.
 
 ## Comparison
 
-| Feature | Google Cal | Calendly | Motion | AirCal |
+| Feature | Google Cal | Calendly | Motion | Atlas |
 |---------|-----------|----------|--------|--------|
 | Timeline view | ❌ | ❌ | ❌ | ✅ |
 | Location-based patterns | ❌ | ❌ | ❌ | ✅ |
@@ -129,7 +129,7 @@ App available at `http://localhost:5173`
 ### Connect CalDAV
 
 1. **Fastmail**: Go to Settings → Privacy & Security → [App Passwords](https://www.fastmail.com/settings/security/devicekeys)
-2. Create an app password for "AirCal"
+2. Create an app password for "Atlas"
 3. In Settings, enter your email and app password
 4. Click Connect—calendars sync automatically
 
@@ -174,7 +174,7 @@ VITE_API_URL=http://localhost:8000
 ## Project Structure
 
 ```
-aircal/
+atlas/
 ├── backend/
 │   ├── app/
 │   │   ├── api/           # FastAPI routes
@@ -214,7 +214,7 @@ Contributions welcome! Please open an issue first to discuss changes.
 ## Community
 
 ⭐ **Star this repo** to follow development
-🐛 **[Report issues](https://github.com/outsidebryce/AirCal/issues)** on GitHub
+🐛 **[Report issues](https://github.com/outsidebryce/Atlas/issues)** on GitHub
 💬 **Discussions** welcome for roadmap input
 
 ## License

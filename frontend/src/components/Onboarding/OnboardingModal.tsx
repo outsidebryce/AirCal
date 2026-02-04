@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import './OnboardingModal.css';
 
-const ONBOARDING_KEY = 'aircal-onboarding-complete';
-const SESSION_KEY = 'aircal-onboarding-session';
+const ONBOARDING_KEY = 'atlas-onboarding-complete';
+const SESSION_KEY = 'atlas-onboarding-session';
 
 interface OnboardingModalProps {
   onComplete?: () => void;
@@ -104,7 +104,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <h2>Welcome to AirCal</h2>
+              <h2>Welcome to Atlas</h2>
               <p>
                 Your intelligent, self-hosted calendar with location awareness,
                 availability scheduling, and AI-powered insights.

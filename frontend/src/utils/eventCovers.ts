@@ -5,7 +5,7 @@
  * and caches them locally in localStorage.
  */
 
-const COVER_CACHE_KEY = 'aircal-event-covers';
+const COVER_CACHE_KEY = 'atlas-event-covers';
 // Using Picsum Photos - high quality, seeded images (consistent per event type)
 const IMAGE_BASE_URL = 'https://picsum.photos';
 

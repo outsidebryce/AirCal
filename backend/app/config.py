@@ -1,20 +1,39 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
+import os
+
+
+def get_default_data_dir() -> Path:
+    """Get the default data directory, supporting both dev and packaged modes."""
+    # Check for Electron-provided data dir
+    if data_dir := os.environ.get('AIRCAL_DATA_DIR'):
+        return Path(data_dir)
+    # Default to backend/data for development
+    return Path(__file__).parent.parent / "data"
 
 
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "AirCal"
     DEBUG: bool = True
+    PORT: int = 8000
 
-    # Database
-    DATABASE_PATH: Path = Path(__file__).parent.parent / "data" / "aircal.db"
+    # Database - computed from data dir
+    @property
+    def DATABASE_PATH(self) -> Path:
+        return get_default_data_dir() / "aircal.db"
 
     # Fastmail CalDAV
     CALDAV_BASE_URL: str = "https://caldav.fastmail.com/"
 
-    # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # CORS - includes Electron app origins
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "file://",
+        "app://.",
+    ]
 
     # Sync settings
     DEFAULT_SYNC_INTERVAL_MINUTES: int = 15

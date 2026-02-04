@@ -62,7 +62,7 @@ function aggregateEvents(events: ExpandedEvent[]): EventAggregate[] {
 }
 
 // Cache for geocoded locations - persisted to localStorage
-const CACHE_KEY = 'aircal-geocode-cache';
+const CACHE_KEY = 'atlas-geocode-cache';
 
 function loadCache(): Record<string, { lat: number; lng: number } | null> {
   try {

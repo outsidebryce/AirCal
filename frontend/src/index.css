@@ -1,14 +1,14 @@
 @font-face {
-  font-family: 'Sofia Sans Condensed';
-  src: url('./assets/Sofia_Sans_Condensed/SofiaSansCondensed-VariableFont_wght.ttf') format('truetype');
+  font-family: 'Inter';
+  src: url('./assets/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Sofia Sans Condensed';
-  src: url('./assets/Sofia_Sans_Condensed/SofiaSansCondensed-Italic-VariableFont_wght.ttf') format('truetype');
+  font-family: 'Inter';
+  src: url('./assets/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 /* Light theme (default) */
 :root {
-  font-family: 'Sofia Sans Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;

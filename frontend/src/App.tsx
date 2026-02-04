@@ -12,7 +12,7 @@ import { OnboardingModal } from './components/Onboarding';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { CalendarModeProvider } from './contexts/CalendarModeContext';
 import type { ExpandedEvent } from './types/event';
-import logo from './assets/air-intent-logo.png.png';
+import logo from './assets/atlas-logo.svg';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -82,8 +82,8 @@ function AppContent() {
     <div className="app">
       <aside className={`sidebar ${sidebarVisible ? '' : 'collapsed'}`}>
         <div className="sidebar-header">
-          <img src={logo} alt="AirCal" className="logo" />
-          <span className="logo-text">AirCal</span>
+          <img src={logo} alt="Atlas" className="logo" />
+          <span className="logo-text">Atlas</span>
           <button
             className="settings-button"
             onClick={() => setIsSettingsOpen(true)}

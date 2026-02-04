@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useEvents } from '../../hooks/useEvents';
 import { useCalendars } from '../../hooks/useCalendars';
+import { useWeather, getWeatherIcon } from '../../hooks/useWeather';
 import { EventCoversTest } from './EventCoversTest';
+import { getUnsplashUrl, extractKeywords } from '../../utils/eventCovers';
 import type { ExpandedEvent } from '../../types/event';
 import type { Calendar } from '../../types/calendar';
 import './Dashboard.css';
@@ -80,6 +82,7 @@ export function Dashboard() {
   }, [rangeType, baseDate]);
 
   const { data: calendars = [] } = useCalendars();
+  const { data: weather } = useWeather();
   const visibleCalendarIds = useMemo(
     () =>
       calendars
@@ -93,6 +96,63 @@ export function Dashboard() {
     dateRange.end,
     visibleCalendarIds.length > 0 ? visibleCalendarIds : undefined
   );
+
+  // Fetch upcoming events for the "Next Up" and agenda widgets
+  const upcomingRange = useMemo(() => {
+    const now = new Date();
+    const end = new Date(now);
+    end.setDate(end.getDate() + 14); // Look ahead 2 weeks
+    return { start: now, end };
+  }, []);
+
+  const { data: upcomingEvents = [] } = useEvents(
+    upcomingRange.start,
+    upcomingRange.end,
+    visibleCalendarIds.length > 0 ? visibleCalendarIds : undefined
+  );
+
+  // Get sorted upcoming events (next 5)
+  const nextEvents = useMemo(() => {
+    const now = new Date();
+    return upcomingEvents
+      .filter((e: ExpandedEvent) => new Date(e.start) > now)
+      .sort((a: ExpandedEvent, b: ExpandedEvent) =>
+        new Date(a.start).getTime() - new Date(b.start).getTime()
+      )
+      .slice(0, 5);
+  }, [upcomingEvents]);
+
+  const nextEvent = nextEvents[0] || null;
+
+  // Get cover image for next event
+  const nextEventCover = useMemo(() => {
+    if (!nextEvent) return null;
+    const keywords = extractKeywords(nextEvent.summary, nextEvent.description, nextEvent.location);
+    return getUnsplashUrl(keywords, 600, 300);
+  }, [nextEvent]);
+
+  // Format time for agenda
+  const formatEventTime = (dateStr: string, allDay: boolean) => {
+    if (allDay) return 'All day';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  };
+
+  // Format date for agenda (relative)
+  const formatEventDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === now.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+  };
 
   const stats: EventStats = useMemo(() => {
     const eventsByDay: Record<string, number> = {};
@@ -250,6 +310,79 @@ export function Dashboard() {
       </div>
 
       <div className="dashboard-grid">
+        {/* Next Up Widget */}
+        <div
+          className="widget-card next-up-widget"
+          style={{
+            backgroundImage: nextEventCover ? `url(${nextEventCover})` : undefined,
+          }}
+        >
+          <div className="widget-overlay">
+            {weather && (
+              <div className="widget-weather">
+                <span className="weather-icon">{getWeatherIcon(weather.weatherCode)}</span>
+                <div className="weather-info">
+                  <span className="weather-temp">{weather.temperature}°</span>
+                  <span className="weather-location">{weather.location}</span>
+                </div>
+              </div>
+            )}
+            <div className="widget-content">
+              {nextEvent ? (
+                <>
+                  <div className="widget-label">Next Up</div>
+                  <div className="widget-title">{nextEvent.summary}</div>
+                  <div className="widget-meta">
+                    <span className="widget-time">
+                      {formatEventDate(nextEvent.start)} at {formatEventTime(nextEvent.start, nextEvent.all_day)}
+                    </span>
+                    {nextEvent.location && (
+                      <span className="widget-location">{nextEvent.location}</span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="widget-label">Next Up</div>
+                  <div className="widget-title">No upcoming events</div>
+                  <div className="widget-meta">
+                    <span className="widget-time">You're all clear!</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mini Agenda Widget */}
+        <div className="widget-card agenda-widget">
+          <div className="agenda-header">
+            <span className="agenda-title">Upcoming</span>
+            <span className="agenda-count">{nextEvents.length} events</span>
+          </div>
+          <div className="agenda-list">
+            {nextEvents.length === 0 ? (
+              <div className="agenda-empty">No upcoming events</div>
+            ) : (
+              nextEvents.map((event: ExpandedEvent, index: number) => (
+                <div key={`${event.uid}-${index}`} className="agenda-item">
+                  <div className="agenda-item-time">
+                    <span className="agenda-item-date">{formatEventDate(event.start)}</span>
+                    <span className="agenda-item-hour">{formatEventTime(event.start, event.all_day)}</span>
+                  </div>
+                  <div className="agenda-item-dot"></div>
+                  <div className="agenda-item-content">
+                    <span className="agenda-item-title">{event.summary}</span>
+                    {event.location && (
+                      <span className="agenda-item-location">{event.location}</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="stat-card">
           <div className="stat-value">{stats.totalEvents}</div>

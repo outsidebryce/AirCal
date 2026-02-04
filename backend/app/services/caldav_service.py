@@ -29,18 +29,27 @@ class CalDAVService:
             password=self.password,
         )
 
-    def verify_connection(self) -> bool:
-        """Verify credentials by attempting to get principal."""
+    def verify_connection(self) -> tuple[bool, str]:
+        """Verify credentials by attempting to get principal.
+
+        Returns:
+            Tuple of (success, error_message)
+        """
         try:
+            logger.info(f"Attempting to connect to CalDAV for user: {self.username}")
+            logger.info(f"Using URL: {self.base_url}")
             client = self._get_client()
             principal = client.principal()
-            return principal is not None
-        except caldav.error.AuthorizationError:
-            logger.warning(f"Authorization failed for user {self.username}")
-            return False
+            if principal is not None:
+                logger.info(f"Successfully connected to CalDAV for {self.username}")
+                return True, ""
+            return False, "Could not get principal from server"
+        except caldav.error.AuthorizationError as e:
+            logger.warning(f"Authorization failed for user {self.username}: {e}")
+            return False, f"Authorization failed: Check your email and app password. Make sure you're using a Fastmail app-specific password, not your regular password."
         except Exception as e:
-            logger.error(f"Connection error: {e}")
-            return False
+            logger.error(f"Connection error for {self.username}: {e}", exc_info=True)
+            return False, f"Connection error: {str(e)}"
 
     def get_calendars(self) -> list[DAVCalendar]:
         """Get all calendars for the authenticated user."""
@@ -128,7 +137,7 @@ class CalDAVService:
             return False
 
     # Async wrappers for FastAPI
-    async def async_verify_connection(self) -> bool:
+    async def async_verify_connection(self) -> tuple[bool, str]:
         """Async wrapper for verify_connection."""
         return await asyncio.to_thread(self.verify_connection)
 

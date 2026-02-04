@@ -41,10 +41,11 @@ async def connect_to_fastmail(
     service = CalDAVService(request.username, request.app_password)
 
     # Verify connection
-    if not await service.async_verify_connection():
+    success, error_message = await service.async_verify_connection()
+    if not success:
         raise HTTPException(
             status_code=401,
-            detail="Failed to connect to Fastmail. Check your username and app password.",
+            detail=error_message or "Failed to connect to Fastmail. Check your username and app password.",
         )
 
     # Get calendars

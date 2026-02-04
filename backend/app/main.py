@@ -62,7 +62,15 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "app": settings.APP_NAME}
+
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("AIRCAL_PORT", settings.PORT))
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
